@@ -1,0 +1,805 @@
+{
+  "ruleChain": {
+    "name": "ABAC rule chain",
+    "type": "EDGE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": true,
+    "configuration": null,
+    "additionalInfo": {
+      "description": ""
+    }
+  },
+  "metadata": {
+    "version": 331,
+    "firstNodeIndex": 12,
+    "nodes": [
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
+        "name": "Save Client Attributes",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          },
+          "scope": "CLIENT_SCOPE",
+          "notifyDevice": false,
+          "sendAttributesUpdatedNotification": false,
+          "updateAttributesOnlyOnValueChange": true
+        },
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 2621,
+          "layoutY": 338
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "Log RPC from Device",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764359885755
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "TBEL",
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
+          "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        },
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 3090,
+          "layoutY": 623
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
+        "name": "Push to cloud",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764323436247
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scope": "CLIENT_SCOPE"
+        },
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 3004,
+          "layoutY": 234
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "OPA Authorization",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764831098628
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 3,
+        "configuration": {
+          "restEndpointUrlPattern": "http://host.docker.internal:8181/v1/data/smartHomeAuthorization/allow_access",
+          "requestMethod": "POST",
+          "useSimpleClientHttpFactory": false,
+          "parseToPlainText": false,
+          "ignoreRequestBody": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyScheme": null,
+          "proxyHost": null,
+          "proxyPort": 0,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "readTimeoutMs": 0,
+          "maxParallelRequestsCount": 0,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "credentials": {
+            "type": "anonymous"
+          },
+          "maxInMemoryBufferSizeInKb": 256
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2027,
+          "layoutY": 105
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "OPA Thermostat Transformation",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764709673977
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var originalInput = JSON.parse(metadata.originalData);\nmetadata.value = originalInput.value;\n\nmsg = {\n  input: {\n    temperature: Number(metadata.value),\n    role: metadata.roleName,\n    deviceName: metadata.deviceName,\n    currentHour: metadata.currentHour\n  }\n};\n\nreturn { msg: msg, metadata: metadata, msgType: msgType };",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 837,
+          "layoutY": 49
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Save to DB",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2307,
+          "layoutY": 29
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "OPA To JSON",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764707824614
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var original = JSON.parse(metadata.originalData);\nmetadata.user = original.user;\nmetadata.value = original.value;\nmetadata.method = original.method;\nmetadata.results = msg.results;\n\nreturn { msg: msg, metadata: metadata };",
+          "tbelScript": "return {msg: msg, metadata: metadata, msgType: msgType};"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2314,
+          "layoutY": 151
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "OPA Decision",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764579970517
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var originalInput = JSON.parse(metadata.originalData)\n\nif (metadata.shared_ovenState === \"false\" && originalInput.method === \"setValue\"){\n    if (metadata.deviceName === \"smartOven\"){\n        return false\n    }\n} else {\n    return msg.result\n}",
+          "tbelScript": ""
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2315,
+          "layoutY": 298
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "RPC data",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764708717758
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var newMsg = {}; \nmsgType = 'RPC message';\nmetadata.oneway = false;\nvar original = JSON.parse(metadata.originalData);\n\nif (metadata.deviceName == \"Thermostat\" || metadata.deviceName == \"smartOven\") {\n    newMsg.method = metadata.method\n    if (metadata.method2 == \"setState\") {\n        newMsg.method = metadata.method2 \n        newMsg.params = metadata.shared_ovenState;\n    } else {\n        newMsg.params = metadata.value;\n    }\n} else {\n    newMsg.method = original.method;\n    newMsg.params = metadata.value;\n}\n\nreturn { msg: newMsg, metadata: metadata, msgType: msgType };\n",
+          "tbelScript": " var newMsg = {};\n\n return {msg: newMsg, metadata: metadata, msgType: msgType}; "
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2395,
+          "layoutY": 539
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
+        "name": "RPC Request to Device",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764864408283
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "timeoutInSeconds": 60
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2761,
+          "layoutY": 544
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "ABAC Failure Alarm",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764709082865
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\n\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "General Alarm",
+          "severity": "WARNING",
+          "propagate": true,
+          "relationTypes": [],
+          "propagateToOwner": true,
+          "propagateToTenant": true,
+          "dynamicSeverity": false
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2565,
+          "layoutY": 188
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Check Device Type (Lights)",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var result = false\nif (metadata.deviceName === \"smartLightM\" || metadata.deviceName === \"smartLightsB\"){\n    result = true;\n}\nmetadata.result = result\nreturn {msg:msg, metadata:metadata}",
+          "tbelScript": "result = false\nif (metadata.device === \"LightsM\"){\n    result = true;\n}\nreturn result"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 820,
+          "layoutY": 247
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Check Device Type (Thermostat)",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764864354619
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var result = false\nvar originalInput = JSON.parse(metadata.originalData);\nvar time = new Date();\nmetadata.currentHour = time.getHours() - 5;\nmetadata.currentMonth = time.getMonth() + 2;\n\nif (metadata.deviceName === \"Thermostat\"){\n    result = true;\n}\n\nmetadata.result = result\nreturn {msg:msg, metadata:metadata}",
+          "tbelScript": "result = false\nif (metadata.device === \"LightsM\"){\n    result = true;\n}\nreturn result"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 295,
+          "layoutY": 146
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Check Device Type (Door)",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var result = false\nif (metadata.deviceName === \"frontDoor\"){\n    result = true;\n}\nmetadata.result = result\nreturn {msg:msg, metadata:metadata}",
+          "tbelScript": "result = false\nif (metadata.device === \"LightsM\"){\n    result = true;\n}\nreturn result"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1288,
+          "layoutY": 331
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Device Check Function",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "return JSON.parse(metadata.result)",
+          "tbelScript": "return m"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 626,
+          "layoutY": 141
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Device Check Function",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "return JSON.parse(metadata.result)",
+          "tbelScript": "return m"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1096,
+          "layoutY": 235
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "OPA Lights Transformation",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var originalInput = JSON.parse(metadata.originalData);\nmetadata.value = originalInput.value;\n\nmsg = {\n  input: {\n    state: metadata.value,\n    role: metadata.roleName,\n    deviceName: metadata.deviceName\n  }\n};\n\nreturn { msg: msg, metadata: metadata, msgType: msgType };",
+          "tbelScript": "result = false\nif (metadata.device === \"LightsM\"){\n    result = true;\n}\nreturn result"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1308,
+          "layoutY": 144
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Device Check Function",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "return JSON.parse(metadata.result)",
+          "tbelScript": "return m"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1518,
+          "layoutY": 239
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "OPA Door Transformation",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764581015507
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var originalInput = JSON.parse(metadata.originalData);\nmetadata.value = originalInput.value;\n\nmsg = {\n  input: {\n    state: metadata.value,\n    role: metadata.roleName,\n    deviceName: metadata.deviceName,\n    currentHour: Number(metadata.currentHour)\n  }\n};\n\nreturn { msg: msg, metadata: metadata, msgType: msgType };",
+          "tbelScript": "result = false\nif (metadata.device === \"LightsM\"){\n    result = true;\n}\nreturn result"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1702,
+          "layoutY": 348
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "OPA Oven Transformation",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764581015507
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "var originalInput = JSON.parse(metadata.originalData); \n\nmsg = {\n  input: {\n    temperature: Number(originalInput.value),\n    ovenPower: metadata.shared_ovenState,\n    role: metadata.roleName,\n    deviceName: metadata.deviceName,\n    parentApproval: metadata.shared_parentApproval,\n    currentMonth:  Number(metadata.currentMonth)\n  }\n};\n\nreturn { msg: msg, metadata: metadata, msgType: msgType };",
+          "tbelScript": "result = false\nif (metadata.device === \"LightsM\"){\n    result = true;\n}\nreturn result"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1726,
+          "layoutY": 170
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Method Check",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764580915421
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "if (metadata.method == \"getState\"){\n    return false\n} else {\n    return true\n}",
+          "tbelScript": "return m"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 458,
+          "layoutY": 419
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message Type Switch",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764579978310
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "version": 0
+        },
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 2167,
+          "layoutY": 449
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "Test",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764359885755
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "defaultTTL": 0,
+          "useServerTs": false,
+          "processingSettings": {
+            "type": "ON_EVERY_MESSAGE"
+          }
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2977,
+          "layoutY": 441
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message Type Switch",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764360065289
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "version": 0
+        },
+        "additionalInfo": {
+          "description": null,
+          "layoutX": 2674,
+          "layoutY": 436
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "RPC data telemetry",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764360151890
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "msgType = 'POST_TELEMETRY_REQUEST';\n\nreturn { msg: msg, metadata: metadata, msgType: msgType };\n",
+          "tbelScript": " var newMsg = {};\n\n return {msg: newMsg, metadata: metadata, msgType: msgType}; "
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2429,
+          "layoutY": 438
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbLogNode",
+        "name": "OPA Logs",
+        "debugSettings": null,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "scriptLang": "JS",
+          "jsScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);",
+          "tbelScript": "return '\\nIncoming message:\\n' + JSON.stringify(msg) + '\\nIncoming metadata:\\n' + JSON.stringify(metadata);"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 2596,
+          "layoutY": 69
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Valid Input Parameters",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 1764709082865
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "alarmType": "General Alarm",
+          "scriptLang": "TBEL",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;",
+          "alarmDetailsBuildTbel": "var details = {};\nif (metadata.prevAlarmDetails != null) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    metadata.remove('prevAlarmDetails');\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 3025,
+          "layoutY": 351
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 2,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 5,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 6,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 3,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 7,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 25,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 10,
+        "type": "False"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 21,
+        "type": "True"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 9,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 24,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 1,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 10,
+        "toIndex": 2,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 11,
+        "toIndex": 15,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 12,
+        "toIndex": 20,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 13,
+        "toIndex": 17,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 14,
+        "toIndex": 4,
+        "type": "True"
+      },
+      {
+        "fromIndex": 14,
+        "toIndex": 11,
+        "type": "False"
+      },
+      {
+        "fromIndex": 15,
+        "toIndex": 13,
+        "type": "False"
+      },
+      {
+        "fromIndex": 15,
+        "toIndex": 16,
+        "type": "True"
+      },
+      {
+        "fromIndex": 16,
+        "toIndex": 3,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 17,
+        "toIndex": 18,
+        "type": "True"
+      },
+      {
+        "fromIndex": 17,
+        "toIndex": 19,
+        "type": "False"
+      },
+      {
+        "fromIndex": 18,
+        "toIndex": 3,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 19,
+        "toIndex": 3,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 20,
+        "toIndex": 14,
+        "type": "True"
+      },
+      {
+        "fromIndex": 20,
+        "toIndex": 21,
+        "type": "False"
+      },
+      {
+        "fromIndex": 21,
+        "toIndex": 0,
+        "type": "Post attributes"
+      },
+      {
+        "fromIndex": 21,
+        "toIndex": 8,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 22,
+        "toIndex": 26,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 23,
+        "toIndex": 22,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 24,
+        "toIndex": 23,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 26,
+        "toIndex": 2,
+        "type": "Cleared"
+      },
+      {
+        "fromIndex": 26,
+        "toIndex": 2,
+        "type": "False"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}
