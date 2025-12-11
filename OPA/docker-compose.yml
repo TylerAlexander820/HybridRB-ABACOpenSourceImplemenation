@@ -1,0 +1,20 @@
+services:
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: opa
+    command:
+      - "run"
+      - "--server"
+      - "--log-level=debug"
+      - "--log-format=json"
+      - "--addr=0.0.0.0:8181"
+      - "/policies/smartHomeAuthorization.rego"
+    ports:
+      - "8181:8181"
+    volumes:
+      - C:/Users/alexa/Documents/OPA/policies:/policies
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+    
+decision_logs:
+  console: true

@@ -1,0 +1,20 @@
+services:
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: opa
+    command:
+      - "run"
+      - "--server"
+      - "--log-level=debug"
+      - "--addr=0.0.0.0:8181"
+    env_file:
+        key.env
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./policies:/policies
+      - ./etc/localtime:/etc/localtime:ro
+    networks:
+      - tb-shared
+    restart: always
+

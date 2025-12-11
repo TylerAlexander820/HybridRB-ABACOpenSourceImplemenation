@@ -1,0 +1,12 @@
+services:
+  acmecorp:
+    url: http://host.docker.internal:8000
+    credentials:
+      bearer:
+        token: "MYTOKEN"
+
+decision_logs:
+  service: acmecorp
+  reporting:
+    min_delay_seconds: 1
+    max_delay_seconds: 10

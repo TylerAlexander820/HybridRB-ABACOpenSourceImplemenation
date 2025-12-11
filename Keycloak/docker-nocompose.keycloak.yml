@@ -1,0 +1,25 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak
+    container_name: keycloak
+    command: ["start-dev"]
+    ports:
+      - "8888:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      PROXY_ADDRESS_FORWARDING: "true"
+      KEYCLOAK_FRONTEND_URL: "http://localhost:8888/"
+    networks:
+      - tb-shared
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+      - /etc/localtime:/etc/localtime:ro
+    restart: always
+
+volumes:
+  keycloak_data:
+  
+networks:
+  tb-shared:
+    driver: bridge

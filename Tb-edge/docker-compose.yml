@@ -1,0 +1,46 @@
+version: '3.8'
+services:
+  mytbedge:
+    restart: always
+    image: "thingsboard/tb-edge:4.2.0EDGE"
+    ports:
+      - "18080:8080"
+      - "1883:1883"
+      - "15683-15688:5683-5688/udp"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
+      CLOUD_ROUTING_KEY: 306c0e11-b585-9364-151c-b45dffc587dd
+      CLOUD_ROUTING_SECRET: h9kgkb1ygkz5hbsps91x
+      CLOUD_RPC_HOST: host.docker.internal
+      CLOUD_RPC_PORT: 7070
+      CLOUD_RPC_SSL_ENABLED: true
+      TB_MQTT_ENABLED: "true"
+      EDGE_SSL_ENABLED: "true"
+      EDGE_SSL_CERT: "/config/certs/edge.crt"
+      EDGE_SSL_PRIVATE_KEY: "/config/certs/edge.key"
+      CLOUD_MQTT_SSL_ENABLED: "true"
+      CLOUD_MQTT_SSL_CERT: "/config/certs/edge.crt"
+      CLOUD_MQTT_SSL_PRIVATE_KEY: "/config/certs/edge.key"
+    volumes:
+      - tb-edge-data:/data
+      - tb-edge-logs:/var/log/tb-edge
+  postgres:
+    restart: always
+    image: "postgres:16"
+    ports:
+      - "5432"
+    environment:
+      POSTGRES_DB: tb-edge
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - tb-edge-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  tb-edge-data:
+    name: tb-edge-data
+  tb-edge-logs:
+    name: tb-edge-logs
+  tb-edge-postgres-data:
+    name: tb-edge-postgres-data
+  - C:/thingsboard/edge-certs:/config/certs
+
