@@ -17,11 +17,11 @@ def setValue(params):
     value['value'] = bool(params)
 
 #Connects to the Thingsboard platform through MQTT
-def on_connect(client, userdata, flags, rc):
+def mqttConnect(client, userdata, flags, rc):
     client.subscribe('v1/devices/me/rpc/request/+')
 
 #Defines what to execute based on the received message
-def on_message(client, userdata, msg):
+def rpcMessageRequest(client, userdata, msg):
     if msg.topic.startswith("v1/devices/me/rpc/request/"):
         requestID = msg.topic[len("v1/devices/me/rpc/request/"):len(msg.topic)]
         data = json.loads(msg.payload)
@@ -42,12 +42,13 @@ def sendTelemetry():
 client = mqtt.Client()
 client.username_pw_set(ACCESSTOKEN)
 
-client.on_connect = on_connect
-client.on_message = on_message
+client.on_connect = mqttConnect
+client.on_message = rpcMessageRequest
 
 client.connect(THINGSBOARDEDGEHOST, PORT, 60)
 client.loop_start()
 
 while True:
     sendTelemetry()
+
     time.sleep(2)
