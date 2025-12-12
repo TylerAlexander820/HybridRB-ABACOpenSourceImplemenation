@@ -217,7 +217,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "jsScript": "// msg is the array from GET /users\nvar user = (msg && msg.length > 0) ? msg[0] : null;\nmetadata.userId = user ? user.id : null;\n\nreturn { msg: msg, metadata: metadata };",
+          "jsScript": "var user = (msg && msg.length > 0) ? msg[0] : null;\nmetadata.userId = user ? user.id : null;\n\nreturn { msg: msg, metadata: metadata };",
           "tbelScript": ""
         },
         "additionalInfo": {
